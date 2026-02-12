@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v6.0 - Advanced Presets & Auto-Font Loading */
+/* sevenrooms-widget.js v6.1 - Scoped CSS Fix */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -12,6 +12,7 @@
 
     // --- 2. CSS INJECTOR ---
     function injectStyles() {
+        // We add a specific class .srf-fp-instance to the calendar styles so they don't override Squarespace forms
         const css = `
         /* CORE FONTS */
         @font-face { font-family: 'League Gothic'; src: url('https://fonts.gstatic.com/s/leaguegothic/v13/qFdR35CBi4tvBz81xy7WG7ep-BQAY7Krj7feObpH_9ahg9U.woff2') format('woff2'); font-display: swap; }
@@ -111,9 +112,10 @@
         .srf-other-date-button, .srf-other-location-button { background-color: transparent; border: 1px solid transparent; color: var(--srf-text); padding: 0.75rem; border-radius: var(--srf-radius); cursor: pointer; }
         .srf-other-date-button:hover, .srf-other-location-button:hover { background-color: var(--srf-border); }
         
-        .flatpickr-calendar { font-family: var(--srf-body-font) !important; background: var(--srf-bg) !important; color: var(--srf-text) !important; border: 1px solid var(--srf-border) !important; border-radius: var(--srf-radius) !important; }
-        .flatpickr-day { color: var(--srf-text) !important; }
-        .flatpickr-day.selected { background: var(--cfg-accent-main) !important; border-color: var(--cfg-accent-main) !important; color: var(--srf-btn-text) !important; }
+        /* SCOPED FLATPICKR STYLES - Added .srf-fp-instance class */
+        .flatpickr-calendar.srf-fp-instance { font-family: var(--srf-body-font) !important; background: var(--srf-bg) !important; color: var(--srf-text) !important; border: 1px solid var(--srf-border) !important; border-radius: var(--srf-radius) !important; }
+        .flatpickr-calendar.srf-fp-instance .flatpickr-day { color: var(--srf-text) !important; }
+        .flatpickr-calendar.srf-fp-instance .flatpickr-day.selected { background: var(--cfg-accent-main) !important; border-color: var(--cfg-accent-main) !important; color: var(--srf-btn-text) !important; }
         `;
         const styleSheet = document.createElement("style");
         styleSheet.type = "text/css";
@@ -123,7 +125,10 @@
 
     function loadDependencies(callback) {
         if (typeof flatpickr === 'function') { callback(); return; }
-        const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css'; document.head.appendChild(link);
+        // Check if css is already loaded to prevent duplicates/overrides
+        if (!document.querySelector('link[href*="flatpickr"]')) {
+            const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css'; document.head.appendChild(link);
+        }
         const fontLink = document.createElement('link'); fontLink.href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"; fontLink.rel = "stylesheet"; document.head.appendChild(fontLink);
         const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/flatpickr';
         script.onload = callback;
@@ -195,7 +200,6 @@
              if (!document.getElementById(styleId)) {
                  const style = document.createElement('style');
                  style.id = styleId;
-                 // Strip quotes from the font name for the @font-face rule
                  const cleanName = CONFIG.FONTS.title.split(',')[0].replace(/['"]/g, '');
                  style.textContent = `@font-face { font-family: '${cleanName}'; src: url('${CONFIG.FONTS.titleUrl}') format('woff'); font-display: swap; }`;
                  document.head.appendChild(style);
@@ -268,7 +272,22 @@
         const modalClose = modal.querySelector('.srf-modal-close'), modalEdit = modal.querySelector('.srf-modal-edit-link'), modalSummary = modal.querySelector('.srf-modal-summary-text'), spinner = modal.querySelector('.srf-spinner'), errorMsg = modal.querySelector('.srf-error'), slotsGrid = modal.querySelector('.srf-slots-grid'), showAllTimesBtn = modal.querySelector('.srf-show-all-times-button'), otherDatesBtn = modal.querySelector('.srf-other-dates-trigger'), otherDatesList = modal.querySelector('.srf-other-dates-list'), otherDatesWrapper = modal.querySelector('.srf-other-dates-wrapper'), otherLocBtn = modal.querySelector('.srf-other-locations-trigger'), otherLocList = modal.querySelector('.srf-other-locations-list'), otherLocWrapper = modal.querySelector('.srf-other-locations-wrapper');
 
         for (let i = 1; i <= 10; i++) { const opt = document.createElement('option'); opt.value = i; opt.text = `${i} ${i === 1 ? 'Person' : 'People'}`; if (i === 2) opt.selected = true; partyInput.appendChild(opt); }
-        let flatpickrInstance = flatpickr(dateInput, { altInput: true, altFormat: "d/m/Y", dateFormat: "Y-m-d", minDate: "today", defaultDate: "today", disableMobile: "true", appendTo: document.body, onReady: (sd, ds, inst) => { inst.calendarContainer.classList.add(CONFIG.THEME === 'light' ? 'srf-theme-light' : 'srf-theme-dark'); applyStyles(inst.calendarContainer); }, onClose: () => { if (modal.classList.contains('srf-visible')) runSearch(false); } });
+        let flatpickrInstance = flatpickr(dateInput, { 
+            altInput: true, 
+            altFormat: "d/m/Y", 
+            dateFormat: "Y-m-d", 
+            minDate: "today", 
+            defaultDate: "today", 
+            disableMobile: "true", 
+            appendTo: document.body, 
+            onReady: (sd, ds, inst) => { 
+                // CRITICAL FIX: Add scoping class to the calendar container
+                inst.calendarContainer.classList.add('srf-fp-instance');
+                inst.calendarContainer.classList.add(CONFIG.THEME === 'light' ? 'srf-theme-light' : 'srf-theme-dark'); 
+                applyStyles(inst.calendarContainer); 
+            }, 
+            onClose: () => { if (modal.classList.contains('srf-visible')) runSearch(false); } 
+        });
 
         function populateTimeList() {
             timeListWrapper.innerHTML = '';
@@ -345,9 +364,9 @@
                     controls.append(l, r); header.appendChild(controls);
                     areaDiv.appendChild(header); areaDiv.appendChild(wrapper); slotsGrid.appendChild(areaDiv);
                     const checkArrows = () => {
-                       l.classList.toggle('srf-disabled', gridDiv.scrollLeft <= 0);
-                       r.classList.toggle('srf-disabled', gridDiv.scrollLeft + gridDiv.clientWidth >= gridDiv.scrollWidth - 1);
-                       areaDiv.classList.toggle('srf-hide-arrows', gridDiv.scrollWidth <= gridDiv.clientWidth);
+                        l.classList.toggle('srf-disabled', gridDiv.scrollLeft <= 0);
+                        r.classList.toggle('srf-disabled', gridDiv.scrollLeft + gridDiv.clientWidth >= gridDiv.scrollWidth - 1);
+                        areaDiv.classList.toggle('srf-hide-arrows', gridDiv.scrollWidth <= gridDiv.clientWidth);
                     };
                     gridDiv.addEventListener('scroll', checkArrows); setTimeout(checkArrows, 100); window.addEventListener('resize', checkArrows);
                 }
