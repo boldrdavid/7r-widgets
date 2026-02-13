@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v6.9 - Fixed Special Offer Margins */
+/* sevenrooms-widget.js v7.1 - Dark Mode Date Picker Fix */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -141,6 +141,10 @@
         .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-day:not(.selected) { color: #ffffff !important; }
         .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-prev-month svg,
         .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-next-month svg { fill: #ffffff !important; }
+
+        /* ADDED: Fix for dark mode dropdown backgrounds (Month Selector) */
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-monthDropdown-months { background-color: var(--srf-bg) !important; }
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-monthDropdown-months option { background-color: var(--srf-bg); color: #ffffff; }
         `;
         const styleSheet = document.createElement("style");
         styleSheet.type = "text/css";
@@ -272,12 +276,27 @@
         CONFIG.VENUES_LIST = localVenuesList;
 
         const uniqueId = Math.random().toString(36).substr(2, 9);
+        
+        // NEW LOGIC: Determine if we show location selector
+        // Show selector if NO explicit venueId is provided AND there are multiple venues available.
+        const explicitVenueId = container.dataset.venueId;
+        const showLocationSelect = !explicitVenueId;
+
         container.innerHTML = `
         <div class="sevenrooms-widget-container srf-theme-${CONFIG.THEME} srf-layout-${CONFIG.LAYOUT}" id="srf-${uniqueId}">
             <div class="srf-step-1-content">
                 <h2>${CONFIG.TITLE}</h2>
                 <form class="srf-form">
                     <input type="hidden" name="venue-id" value="${CONFIG.VENUE_ID}">
+                    
+                    ${showLocationSelect ? `
+                    <div class="srf-form-group srf-location-group">
+                        <label>Location</label>
+                        <div class="srf-select-wrapper">
+                            <select class="srf-input venue-select"></select>
+                        </div>
+                    </div>` : ''}
+
                     <div class="srf-form-group"><label>Party Size</label><div class="srf-select-wrapper"><select name="party-size" class="srf-input party-size-select"></select></div></div>
                     <div class="srf-form-group"><label>Date</label><div class="srf-date-wrapper"><input type="text" class="srf-input date-input" placeholder="Select a date..." required></div></div>
                     <div class="srf-form-group srf-time-group"><label>Preferred Time</label><button type="button" class="srf-input srf-time-trigger-button">All Times</button><input type="hidden" name="time-slot" class="time-slot-input" value="_all_"><input type="hidden" name="halo-interval" class="halo-interval-input" value="60"></div>
@@ -308,6 +327,23 @@
 
         const form = wrapper.querySelector('.srf-form'), submitBtn = wrapper.querySelector('.submit-btn'), partyInput = wrapper.querySelector('.party-size-select'), dateInput = wrapper.querySelector('.date-input'), timeTrigger = wrapper.querySelector('.srf-time-trigger-button'), timeSlotInput = wrapper.querySelector('.time-slot-input'), haloInput = wrapper.querySelector('.halo-interval-input'), timeListWrapper = dropdown.querySelector('.srf-time-list-wrapper'), haloGroup = dropdown.querySelector('.srf-halo-group');
         const modalClose = modal.querySelector('.srf-modal-close'), modalEdit = modal.querySelector('.srf-modal-edit-link'), modalSummary = modal.querySelector('.srf-modal-summary-text'), spinner = modal.querySelector('.srf-spinner'), errorMsg = modal.querySelector('.srf-error'), slotsGrid = modal.querySelector('.srf-slots-grid'), showAllTimesBtn = modal.querySelector('.srf-show-all-times-button'), otherDatesBtn = modal.querySelector('.srf-other-dates-trigger'), otherDatesList = modal.querySelector('.srf-other-dates-list'), otherDatesWrapper = modal.querySelector('.srf-other-dates-wrapper'), otherLocBtn = modal.querySelector('.srf-other-locations-trigger'), otherLocList = modal.querySelector('.srf-other-locations-list'), otherLocWrapper = modal.querySelector('.srf-other-locations-wrapper');
+
+        // --- NEW: Initialize Location Selector if active ---
+        const venueSelect = wrapper.querySelector('.venue-select');
+        if (showLocationSelect && venueSelect) {
+            localVenuesList.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = v.name;
+                if (v.id === CONFIG.VENUE_ID) opt.selected = true;
+                venueSelect.appendChild(opt);
+            });
+            // Update the hidden input and the config when user changes location
+            venueSelect.onchange = () => {
+                CONFIG.VENUE_ID = venueSelect.value;
+                form.querySelector('input[name="venue-id"]').value = venueSelect.value;
+            };
+        }
 
         for (let i = 1; i <= 10; i++) { const opt = document.createElement('option'); opt.value = i; opt.text = `${i} ${i === 1 ? 'Person' : 'People'}`; if (i === 2) opt.selected = true; partyInput.appendChild(opt); }
         let flatpickrInstance = flatpickr(dateInput, { 
