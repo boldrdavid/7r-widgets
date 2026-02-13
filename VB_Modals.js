@@ -1,4 +1,3 @@
-<!-- PC Modals, custom code (Updated for Vivat Bacchus) -->
 <style>
   /* --- Base Modal Styles --- */
   .custom-modal { display: none; position: fixed; inset: 0; z-index: 999999; }
