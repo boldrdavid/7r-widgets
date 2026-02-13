@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.1 - Dark Mode Date Picker Fix */
+/* sevenrooms-widget.js v7.3 - Layout Stability Fixes */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -22,7 +22,20 @@
         .srf-theme-dark { --srf-bg: var(--cfg-bg-dark); --srf-text: var(--cfg-bg-light); --srf-input-bg: rgba(255, 255, 255, 0.1); --srf-input-text: #ffffff; --srf-border: color-mix(in srgb, var(--cfg-bg-light), transparent 80%); --srf-btn-text: var(--cfg-bg-light); --srf-slot-bg: var(--cfg-accent-main); --srf-slot-text: var(--cfg-bg-light); }
 
         /* STRUCTURE */
-        .sevenrooms-widget-container { background-color: var(--srf-bg); color: var(--srf-text); font-family: var(--srf-body-font); border-radius: var(--srf-radius); position: relative; padding: var(--srf-padding-container); width: 100%; box-sizing: border-box; }
+        .sevenrooms-widget-container { 
+            background-color: var(--srf-bg); 
+            color: var(--srf-text); 
+            font-family: var(--srf-body-font); 
+            border-radius: var(--srf-radius); 
+            position: relative; 
+            padding: var(--srf-padding-container); 
+            width: 100%; 
+            max-width: 100%; /* Fix: Prevent grid blowouts */
+            margin: 0;       /* Fix: Prevent external margin push */
+            display: block;  /* Fix: Ensure block layout */
+            overflow-x: hidden; /* Fix: Contain horizontal overflow */
+            box-sizing: border-box; 
+        }
         .sevenrooms-widget-container * { box-sizing: border-box; }
         .sevenrooms-widget-container h2 { font-family: var(--srf-title-font); font-weight: 300; text-align: center; margin: 0 0 var(--srf-margin-title) 0; font-size: 2.5rem; line-height: 1.2; color: var(--srf-text); text-transform: uppercase; letter-spacing: 0.05em; }
         .sevenrooms-widget-container label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: var(--srf-margin-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--srf-text); font-family: var(--srf-body-font); }
@@ -331,14 +344,27 @@
         // --- NEW: Initialize Location Selector if active ---
         const venueSelect = wrapper.querySelector('.venue-select');
         if (showLocationSelect && venueSelect) {
+            // 1. Add Placeholder
+            const placeholder = document.createElement('option');
+            placeholder.value = "";
+            placeholder.textContent = "Select Venue...";
+            placeholder.selected = true;
+            placeholder.disabled = true; // Prevent re-selection
+            venueSelect.appendChild(placeholder);
+
+            // 2. Clear default Venue ID
+            CONFIG.VENUE_ID = "";
+            form.querySelector('input[name="venue-id"]').value = "";
+
+            // 3. Add Venues
             localVenuesList.forEach(v => {
                 const opt = document.createElement('option');
                 opt.value = v.id;
                 opt.textContent = v.name;
-                if (v.id === CONFIG.VENUE_ID) opt.selected = true;
                 venueSelect.appendChild(opt);
             });
-            // Update the hidden input and the config when user changes location
+
+            // 4. Handle Change
             venueSelect.onchange = () => {
                 CONFIG.VENUE_ID = venueSelect.value;
                 form.querySelector('input[name="venue-id"]').value = venueSelect.value;
@@ -380,6 +406,16 @@
         haloGroup.querySelectorAll('input').forEach(r => { r.onchange = (e) => { haloInput.value = e.target.value; updateTimeButton(); }; });
 
         async function runSearch(isManual) {
+            if (!CONFIG.VENUE_ID) {
+                if (isManual) {
+                    modal.classList.add('srf-visible'); 
+                    spinner.style.display = 'none'; 
+                    slotsGrid.style.display = 'none'; 
+                    errorMsg.style.display = 'block'; 
+                    errorMsg.textContent = "Please select a location.";
+                }
+                return;
+            }
             if(isManual) { submitBtn.textContent = 'Checking...'; submitBtn.disabled = true; }
             modal.classList.add('srf-visible'); spinner.style.display = 'block'; slotsGrid.style.display = 'none'; errorMsg.style.display = 'none';
             const dateStr = new Date(dateInput.value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
