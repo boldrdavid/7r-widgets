@@ -1,11 +1,11 @@
-/* sevenrooms-widget.js v6.3 - Simplified Config Support (No Brands) */
+/* sevenrooms-widget.js v6.4 - Special Offer Sorting & Label Fix */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
     const ENGINE_DEFAULTS = {
         API_URL: 'https://sevenrooms.netlify.app/.netlify/functions/check-availability',
         FONTS: {
-            title: "'League Gothic', sans-serif",
+            title: "'Poppins', sans-serif",
             body: "'Poppins', sans-serif"
         }
     };
@@ -361,10 +361,16 @@
             if (!venueData || Object.keys(venueData).length === 0) { slotsGrid.innerHTML = '<p style="text-align:center; opacity:0.7;">No tables found.</p>'; slotsGrid.style.display = 'block'; otherDatesBtn.click(); return; }
 
             const areaNames = Object.keys(venueData);
-            // --- SMART SORTING ---
+            // --- SMART SORTING (UPDATED v6.4) ---
             areaNames.sort((a, b) => {
                 const aLower = a.toLowerCase(), bLower = b.toLowerCase();
-                const getRank = (n) => { if (n.includes("25% off")) return 0; if (n.includes("wine and dine")) return 1; if (n.includes("wine")) return 2; return 10; };
+                const getRank = (n) => { 
+                    // Force all special offers (containing "% off" or "special") to the top
+                    if (n.includes("% off")) return 0; 
+                    if (n.includes("special")) return 1;
+                    if (n.includes("wine")) return 2; 
+                    return 10; 
+                };
                 const rankA = getRank(aLower), rankB = getRank(bLower);
                 if (rankA !== rankB) return rankA - rankB;
                 const timeA = (venueData[a] && venueData[a].length > 0) ? venueData[a][0].time_iso : '9999';
@@ -378,7 +384,12 @@
                 let targetMin = -1, targetMax = -1;
                 if(timeSlotInput.value !== '_all_') { const [h, m] = timeSlotInput.value.split(':').map(Number); const minutes = h * 60 + m; const hInt = parseInt(haloInput.value); targetMin = minutes - hInt; targetMax = minutes + hInt; }
                 const areaDiv = document.createElement('div'); areaDiv.className = `srf-area-container ${areaName.includes('% off') ? 'srf-special-offer-area' : ''}`;
-                const title = document.createElement('h3'); title.className = 'srf-area-heading'; title.innerHTML = areaName.includes('% off') ? `${areaName} <span class="srf-special-offer-label">Special</span>` : areaName;
+                
+                // UPDATED: Label text is now "Special Offer"
+                const title = document.createElement('h3'); 
+                title.className = 'srf-area-heading'; 
+                title.innerHTML = areaName.includes('% off') ? `${areaName} <span class="srf-special-offer-label">Special Offer</span>` : areaName;
+                
                 const gridDiv = document.createElement('div'); gridDiv.className = 'srf-slots-subgrid';
                 let count = 0;
                 slots.forEach(slot => {
