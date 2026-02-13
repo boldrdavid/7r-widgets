@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v6.7 - "Special Offer" Text Fix */
+/* sevenrooms-widget.js v6.9 - Fixed Special Offer Margins */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -99,6 +99,10 @@
         .srf-scroll-btn.srf-disabled { opacity: 0.2; pointer-events: none; }
         .srf-area-container.srf-hide-arrows .srf-scroll-controls { display: none; }
         .srf-slots-subgrid-wrapper { position: relative; margin-bottom: 1.5rem; }
+        
+        /* ADDED: Kill margin inside special offers to prevent "chin" space */
+        .srf-special-offer-area .srf-slots-subgrid-wrapper { margin-bottom: 0; }
+
         .srf-slots-subgrid { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 0.75rem; padding-bottom: 0.75rem; }
         .srf-slots-subgrid::-webkit-scrollbar { height: 6px; }
         .srf-slots-subgrid::-webkit-scrollbar-thumb { background: var(--srf-border); border-radius: var(--srf-radius); }
@@ -359,7 +363,7 @@
             if (!venueData || Object.keys(venueData).length === 0) { slotsGrid.innerHTML = '<p style="text-align:center; opacity:0.7;">No tables found.</p>'; slotsGrid.style.display = 'block'; otherDatesBtn.click(); return; }
 
             const areaNames = Object.keys(venueData);
-            // --- SMART SORTING (UPDATED v6.7) ---
+            // --- SMART SORTING (UPDATED v6.9) ---
             areaNames.sort((a, b) => {
                 const aLower = a.toLowerCase(), bLower = b.toLowerCase();
                 const getRank = (n) => { 
