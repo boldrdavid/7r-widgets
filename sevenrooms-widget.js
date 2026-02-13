@@ -1,11 +1,11 @@
-/* sevenrooms-widget.js v6.2 - Fixed Missing Dependency Function */
+/* sevenrooms-widget.js v6.3 - Simplified Config Support (No Brands) */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
     const ENGINE_DEFAULTS = {
         API_URL: 'https://sevenrooms.netlify.app/.netlify/functions/check-availability',
         FONTS: {
-            title: "'Poppins', sans-serif",
+            title: "'League Gothic', sans-serif",
             body: "'Poppins', sans-serif"
         }
     };
@@ -146,7 +146,7 @@
         document.head.appendChild(styleSheet);
     }
 
-    // --- 3. DEPENDENCY LOADER (MISSING IN YOUR PASTE) ---
+    // --- 3. DEPENDENCY LOADER ---
     function loadDependencies(callback) {
         if (typeof flatpickr === 'function') { callback(); return; }
         // Check if css is already loaded to prevent duplicates/overrides
@@ -161,7 +161,8 @@
 
     // --- 4. WIDGET FACTORY ---
     function initAllWidgets() {
-        if (!window.SR_WIDGET_CONFIG || !window.SR_WIDGET_CONFIG.THEMES) {
+        // Support new .THEME or legacy .THEMES
+        if (!window.SR_WIDGET_CONFIG || (!window.SR_WIDGET_CONFIG.THEMES && !window.SR_WIDGET_CONFIG.THEME)) {
             console.warn("SR Widget: No configuration found in window.SR_WIDGET_CONFIG");
             return;
         }
@@ -174,11 +175,22 @@
     }
 
     function initSingleWidget(container) {
-        const brandKey = container.dataset.branding || "VB";
-        const theme = window.SR_WIDGET_CONFIG.THEMES[brandKey] || window.SR_WIDGET_CONFIG.THEMES["VB"];
+        // Resolve configuration mode (Single Theme vs Legacy Multi-Brand)
+        let theme, localVenuesList, styleSuffix;
         
-        const allVenues = window.SR_WIDGET_CONFIG.VENUES || [];
-        let localVenuesList = allVenues.filter(v => v.brand === brandKey);
+        if (window.SR_WIDGET_CONFIG.THEME) {
+            // v6.3: Simplified Config (No Brands)
+            theme = window.SR_WIDGET_CONFIG.THEME;
+            localVenuesList = window.SR_WIDGET_CONFIG.VENUES || [];
+            styleSuffix = 'main';
+        } else {
+            // Legacy: Brands & Themes
+            const brandKey = container.dataset.branding || "VB";
+            styleSuffix = brandKey;
+            theme = window.SR_WIDGET_CONFIG.THEMES[brandKey] || window.SR_WIDGET_CONFIG.THEMES["VB"];
+            const allVenues = window.SR_WIDGET_CONFIG.VENUES || [];
+            localVenuesList = allVenues.filter(v => v.brand === brandKey);
+        }
 
         const themeFonts = theme.fonts || {};
         const CONFIG = {
@@ -220,7 +232,7 @@
         
         // Auto-build @font-face if titleUrl is provided
         if (CONFIG.FONTS.titleUrl) {
-             const styleId = `srf-font-face-${brandKey}`;
+             const styleId = `srf-font-face-${styleSuffix}`;
              if (!document.getElementById(styleId)) {
                  const style = document.createElement('style');
                  style.id = styleId;
@@ -244,7 +256,7 @@
 
         const currentVenueIndex = localVenuesList.findIndex(v => v.id === CONFIG.VENUE_ID);
         if (currentVenueIndex === -1) {
-            const globalVenue = allVenues.find(v => v.id === CONFIG.VENUE_ID);
+            const globalVenue = window.SR_WIDGET_CONFIG.VENUES ? window.SR_WIDGET_CONFIG.VENUES.find(v => v.id === CONFIG.VENUE_ID) : null;
             localVenuesList.unshift({ 
                 id: CONFIG.VENUE_ID, 
                 name: CONFIG.VENUE_NAME || (globalVenue ? globalVenue.name : 'Main Venue'), 
