@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v6.5 - Default Font Poppins & Cleanup */
+/* sevenrooms-widget.js v6.7 - "Special Offer" Text Fix */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -359,13 +359,12 @@
             if (!venueData || Object.keys(venueData).length === 0) { slotsGrid.innerHTML = '<p style="text-align:center; opacity:0.7;">No tables found.</p>'; slotsGrid.style.display = 'block'; otherDatesBtn.click(); return; }
 
             const areaNames = Object.keys(venueData);
-            // --- SMART SORTING (UPDATED v6.4) ---
+            // --- SMART SORTING (UPDATED v6.7) ---
             areaNames.sort((a, b) => {
                 const aLower = a.toLowerCase(), bLower = b.toLowerCase();
                 const getRank = (n) => { 
                     // Force all special offers (containing "% off" or "special") to the top
-                    if (n.includes("% off")) return 0; 
-                    if (n.includes("special")) return 1;
+                    if (n.includes("% off") || n.includes("special")) return 0; // Rank 0 (highest)
                     if (n.includes("wine")) return 2; 
                     return 10; 
                 };
@@ -381,18 +380,25 @@
                 const slots = venueData[areaName];
                 let targetMin = -1, targetMax = -1;
                 if(timeSlotInput.value !== '_all_') { const [h, m] = timeSlotInput.value.split(':').map(Number); const minutes = h * 60 + m; const hInt = parseInt(haloInput.value); targetMin = minutes - hInt; targetMax = minutes + hInt; }
-                const areaDiv = document.createElement('div'); areaDiv.className = `srf-area-container ${areaName.includes('% off') ? 'srf-special-offer-area' : ''}`;
                 
-                // UPDATED: Label text is now "Special Offer"
+                // Fix: Case-insensitive check for styling and labels
+                const lowerName = areaName.toLowerCase();
+                const isSpecial = lowerName.includes('% off') || lowerName.includes('special');
+
+                const areaDiv = document.createElement('div'); 
+                areaDiv.className = `srf-area-container ${isSpecial ? 'srf-special-offer-area' : ''}`;
+                
                 const title = document.createElement('h3'); 
                 title.className = 'srf-area-heading'; 
-                title.innerHTML = areaName.includes('% off') ? `${areaName} <span class="srf-special-offer-label">Special Offer</span>` : areaName;
+                // EXPLICITLY SETTING "Special Offer" TEXT
+                title.innerHTML = isSpecial ? `${areaName} <span class="srf-special-offer-label">Special Offer</span>` : areaName;
                 
                 const gridDiv = document.createElement('div'); gridDiv.className = 'srf-slots-subgrid';
                 let count = 0;
                 slots.forEach(slot => {
                     const [sh, sm] = slot.time_iso.substring(11, 16).split(':').map(Number); const sMin = sh * 60 + sm;
-                    if(timeSlotInput.value !== '_all_' && (sMin < targetMin || sMin > targetMax) && !areaName.includes('% off')) return;
+                    // UPDATED: Use isSpecial to prevent special offers from being filtered by time
+                    if(timeSlotInput.value !== '_all_' && (sMin < targetMin || sMin > targetMax) && !isSpecial) return;
                     const btn = document.createElement('a'); btn.className = 'srf-slot-button'; btn.textContent = slot.time_formatted;
                     const vConfig = CONFIG.VENUES_LIST.find(v => v.id === CONFIG.VENUE_ID) || {};
                     const path = vConfig.path || 'checkout';
