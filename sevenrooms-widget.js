@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.3 - Layout Stability Fixes */
+/* sevenrooms-widget.js v7.5 - Clean Location Names */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -97,6 +97,9 @@
         .srf-spinner { display: none; margin: 2rem auto; border: 4px solid var(--srf-input-bg); width: 48px; height: 48px; border-radius: 50%; border-left-color: var(--cfg-accent-main); animation: srf-spin 1s ease infinite; }
         @keyframes srf-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .srf-error { display: none; padding: 1rem; border: 1px solid var(--cfg-accent-main); color: var(--cfg-accent-main); margin-bottom: 1rem; }
+        
+        /* ADDED: Inline error style */
+        .srf-inline-error { display: none; color: var(--cfg-accent-main); font-size: 0.9rem; font-weight: 600; margin-top: 0.5rem; text-align: center; }
 
         /* GRID & RESULTS */
         .srf-slots-grid { display: none; }
@@ -313,7 +316,11 @@
                     <div class="srf-form-group"><label>Party Size</label><div class="srf-select-wrapper"><select name="party-size" class="srf-input party-size-select"></select></div></div>
                     <div class="srf-form-group"><label>Date</label><div class="srf-date-wrapper"><input type="text" class="srf-input date-input" placeholder="Select a date..." required></div></div>
                     <div class="srf-form-group srf-time-group"><label>Preferred Time</label><button type="button" class="srf-input srf-time-trigger-button">All Times</button><input type="hidden" name="time-slot" class="time-slot-input" value="_all_"><input type="hidden" name="halo-interval" class="halo-interval-input" value="60"></div>
-                    <div class="srf-form-group srf-submit-group"><label class="srf-layout-horizontal-label">&nbsp;</label><button type="button" class="srf-button submit-btn">SEARCH</button></div>
+                    <div class="srf-form-group srf-submit-group">
+                        <label class="srf-layout-horizontal-label">&nbsp;</label>
+                        <button type="button" class="srf-button submit-btn">SEARCH</button>
+                    </div>
+                    <div class="srf-inline-error"></div>
                 </form>
             </div>
             <div class="srf-time-dropdown srf-theme-${CONFIG.THEME}" id="dropdown-${uniqueId}">
@@ -340,6 +347,7 @@
 
         const form = wrapper.querySelector('.srf-form'), submitBtn = wrapper.querySelector('.submit-btn'), partyInput = wrapper.querySelector('.party-size-select'), dateInput = wrapper.querySelector('.date-input'), timeTrigger = wrapper.querySelector('.srf-time-trigger-button'), timeSlotInput = wrapper.querySelector('.time-slot-input'), haloInput = wrapper.querySelector('.halo-interval-input'), timeListWrapper = dropdown.querySelector('.srf-time-list-wrapper'), haloGroup = dropdown.querySelector('.srf-halo-group');
         const modalClose = modal.querySelector('.srf-modal-close'), modalEdit = modal.querySelector('.srf-modal-edit-link'), modalSummary = modal.querySelector('.srf-modal-summary-text'), spinner = modal.querySelector('.srf-spinner'), errorMsg = modal.querySelector('.srf-error'), slotsGrid = modal.querySelector('.srf-slots-grid'), showAllTimesBtn = modal.querySelector('.srf-show-all-times-button'), otherDatesBtn = modal.querySelector('.srf-other-dates-trigger'), otherDatesList = modal.querySelector('.srf-other-dates-list'), otherDatesWrapper = modal.querySelector('.srf-other-dates-wrapper'), otherLocBtn = modal.querySelector('.srf-other-locations-trigger'), otherLocList = modal.querySelector('.srf-other-locations-list'), otherLocWrapper = modal.querySelector('.srf-other-locations-wrapper');
+        const inlineError = wrapper.querySelector('.srf-inline-error');
 
         // --- NEW: Initialize Location Selector if active ---
         const venueSelect = wrapper.querySelector('.venue-select');
@@ -347,7 +355,7 @@
             // 1. Add Placeholder
             const placeholder = document.createElement('option');
             placeholder.value = "";
-            placeholder.textContent = "Select Venue...";
+            placeholder.textContent = "Select...";
             placeholder.selected = true;
             placeholder.disabled = true; // Prevent re-selection
             venueSelect.appendChild(placeholder);
@@ -360,7 +368,12 @@
             localVenuesList.forEach(v => {
                 const opt = document.createElement('option');
                 opt.value = v.id;
-                opt.textContent = v.name;
+                
+                // Clean Name Logic
+                let cleanName = v.name;
+                cleanName = cleanName.replace(/Vivat Bacchus\s*/i, "").replace(/Humble Grape\s*/i, "").trim();
+                
+                opt.textContent = cleanName;
                 venueSelect.appendChild(opt);
             });
 
@@ -368,6 +381,7 @@
             venueSelect.onchange = () => {
                 CONFIG.VENUE_ID = venueSelect.value;
                 form.querySelector('input[name="venue-id"]').value = venueSelect.value;
+                if (inlineError) inlineError.style.display = 'none';
             };
         }
 
@@ -406,13 +420,11 @@
         haloGroup.querySelectorAll('input').forEach(r => { r.onchange = (e) => { haloInput.value = e.target.value; updateTimeButton(); }; });
 
         async function runSearch(isManual) {
+            if (inlineError) inlineError.style.display = 'none'; // Reset error
             if (!CONFIG.VENUE_ID) {
-                if (isManual) {
-                    modal.classList.add('srf-visible'); 
-                    spinner.style.display = 'none'; 
-                    slotsGrid.style.display = 'none'; 
-                    errorMsg.style.display = 'block'; 
-                    errorMsg.textContent = "Please select a location.";
+                if (isManual && inlineError) {
+                    inlineError.textContent = "Please select a location.";
+                    inlineError.style.display = 'block';
                 }
                 return;
             }
