@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v6.4 - Special Offer Sorting & Label Fix */
+/* sevenrooms-widget.js v6.5 - Default Font Poppins & Cleanup */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -14,9 +14,7 @@
     function injectStyles() {
         // We add a specific class .srf-fp-instance to the calendar styles so they don't override Squarespace forms
         const css = `
-        /* CORE FONTS */
-        @font-face { font-family: 'League Gothic'; src: url('https://fonts.gstatic.com/s/leaguegothic/v13/qFdR35CBi4tvBz81xy7WG7ep-BQAY7Krj7feObpH_9ahg9U.woff2') format('woff2'); font-display: swap; }
-        
+        /* CORE STYLES */
         :root { --srf-radius: 2px; --srf-padding-container: 30px; --srf-margin-form-group: 1rem; --srf-margin-label: 0.25rem; --srf-margin-title: 0.5rem; }
         
         /* THEMES */
