@@ -10,7 +10,7 @@
         }
     };
 
-    // --- 2. CSS INJECTOR ---
+  // --- 2. CSS INJECTOR ---
     function injectStyles() {
         // We add a specific class .srf-fp-instance to the calendar styles so they don't override Squarespace forms
         const css = `
@@ -73,7 +73,13 @@
         .srf-modal-overlay.srf-visible { display: flex; }
         .srf-results-modal-content { background-color: var(--srf-bg); color: var(--srf-text); font-family: var(--srf-body-font); width: 100%; max-width: 800px; max-height: 90vh; border-radius: var(--srf-radius); display: flex; flex-direction: column; position: relative; border: 1px solid var(--srf-border); }
         .srf-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--srf-border); }
-        .srf-modal-title { margin: 0; font-size: 0.9rem; font-weight: 600; color: var(--srf-text); }
+        
+        /* ADJUSTED: Font size bumped from 0.9rem to 1.2rem */
+        .srf-modal-title { margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--srf-text); }
+        
+        /* ADDED: Force white summary text explicitly on dark mode */
+        .srf-theme-dark .srf-modal-summary-text { color: #ffffff !important; }
+
         .srf-modal-edit-link { background: none; border: none; color: var(--cfg-accent-main); text-decoration: underline; cursor: pointer; margin-left: 0.5rem; font-size: 0.875rem; }
         .srf-modal-close { background: none; border: none; font-size: 2rem; color: var(--srf-text); opacity: 0.7; cursor: pointer; }
         .srf-results-body { padding: 1.5rem; overflow-y: auto; flex-grow: 1; }
@@ -116,23 +122,28 @@
         .flatpickr-calendar.srf-fp-instance { font-family: var(--srf-body-font) !important; background: var(--srf-bg) !important; color: var(--srf-text) !important; border: 1px solid var(--srf-border) !important; border-radius: var(--srf-radius) !important; }
         .flatpickr-calendar.srf-fp-instance .flatpickr-day { color: var(--srf-text) !important; }
         .flatpickr-calendar.srf-fp-instance .flatpickr-day.selected { background: var(--cfg-accent-main) !important; border-color: var(--cfg-accent-main) !important; color: var(--srf-btn-text) !important; }
+        
+        /* ADDED: Fix for Flatpickr Month/Year/Weekday colors overriding defaults */
+        .flatpickr-calendar.srf-fp-instance .flatpickr-current-month,
+        .flatpickr-calendar.srf-fp-instance .flatpickr-current-month .flatpickr-monthDropdown-months,
+        .flatpickr-calendar.srf-fp-instance .flatpickr-current-month input.cur-year,
+        .flatpickr-calendar.srf-fp-instance span.flatpickr-weekday { color: var(--srf-text) !important; }
+        .flatpickr-calendar.srf-fp-instance .flatpickr-prev-month svg,
+        .flatpickr-calendar.srf-fp-instance .flatpickr-next-month svg { fill: var(--srf-text) !important; }
+        
+        /* ADDED: Enforce exact white for dark mode calendar text elements */
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-current-month,
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-current-month .flatpickr-monthDropdown-months,
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-current-month input.cur-year,
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark span.flatpickr-weekday,
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-day:not(.selected) { color: #ffffff !important; }
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-prev-month svg,
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-next-month svg { fill: #ffffff !important; }
         `;
         const styleSheet = document.createElement("style");
         styleSheet.type = "text/css";
         styleSheet.innerText = css;
         document.head.appendChild(styleSheet);
-    }
-
-    function loadDependencies(callback) {
-        if (typeof flatpickr === 'function') { callback(); return; }
-        // Check if css is already loaded to prevent duplicates/overrides
-        if (!document.querySelector('link[href*="flatpickr"]')) {
-            const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css'; document.head.appendChild(link);
-        }
-        const fontLink = document.createElement('link'); fontLink.href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"; fontLink.rel = "stylesheet"; document.head.appendChild(fontLink);
-        const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/flatpickr';
-        script.onload = callback;
-        document.head.appendChild(script);
     }
 
     // --- 3. WIDGET FACTORY ---
