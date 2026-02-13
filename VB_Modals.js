@@ -80,7 +80,19 @@
 
   /* --- Specific Modal Tweaks --- */
   #pipedrive-box { max-width: 700px; height: 85vh; }
-  #gdrive-pdf-box, #matterport-modal-box { max-width: 1100px; height: 95vh; }
+  /* Keep Matterport at 95vh */
+#matterport-modal-box { 
+  max-width: 1100px; 
+  height: 95vh; 
+}
+
+/* Give the PDF box a landscape aspect ratio instead of a fixed height */
+#gdrive-pdf-box { 
+  max-width: 1100px; 
+  width: 100%;
+  aspect-ratio: 1.4 / 1; /* Matches a standard landscape document perfectly */
+  max-height: 90vh; /* Ensures it never gets taller than the screen on weirdly shaped monitors */
+}
   #klaviyo-box { max-width: 500px; background: #737a6a; /* Updated Brand Color */ }
     
   /* Mobile PDF Height Override */
