@@ -1,16 +1,16 @@
-/* sevenrooms-widget.js v6.1 - Scoped CSS Fix */
+/* sevenrooms-widget.js v6.2 - Fixed Missing Dependency Function */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
     const ENGINE_DEFAULTS = {
         API_URL: 'https://sevenrooms.netlify.app/.netlify/functions/check-availability',
         FONTS: {
-            title: "'League Gothic', sans-serif",
+            title: "'Poppins', sans-serif",
             body: "'Poppins', sans-serif"
         }
     };
 
-  // --- 2. CSS INJECTOR ---
+    // --- 2. CSS INJECTOR ---
     function injectStyles() {
         // We add a specific class .srf-fp-instance to the calendar styles so they don't override Squarespace forms
         const css = `
@@ -146,7 +146,20 @@
         document.head.appendChild(styleSheet);
     }
 
-    // --- 3. WIDGET FACTORY ---
+    // --- 3. DEPENDENCY LOADER (MISSING IN YOUR PASTE) ---
+    function loadDependencies(callback) {
+        if (typeof flatpickr === 'function') { callback(); return; }
+        // Check if css is already loaded to prevent duplicates/overrides
+        if (!document.querySelector('link[href*="flatpickr"]')) {
+            const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css'; document.head.appendChild(link);
+        }
+        const fontLink = document.createElement('link'); fontLink.href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"; fontLink.rel = "stylesheet"; document.head.appendChild(fontLink);
+        const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/flatpickr';
+        script.onload = callback;
+        document.head.appendChild(script);
+    }
+
+    // --- 4. WIDGET FACTORY ---
     function initAllWidgets() {
         if (!window.SR_WIDGET_CONFIG || !window.SR_WIDGET_CONFIG.THEMES) {
             console.warn("SR Widget: No configuration found in window.SR_WIDGET_CONFIG");
